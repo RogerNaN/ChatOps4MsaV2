@@ -2,10 +2,10 @@
 
 # clone the Bookinfo microservices system
 cd ..
-git clone git@github.com:RogerNaN/ChatOps4Msa-Sample-Bookinfo-Productpage.git
-git clone git@github.com:RogerNaN/ChatOps4Msa-Sample-Bookinfo-Reviews.git
-git clone git@github.com:RogerNaN/ChatOps4Msa-Sample-Bookinfo-Ratings.git
-git clone git@github.com:RogerNaN/ChatOps4Msa-Sample-Bookinfo-Details.git
+git clone git@github.com:zxc90836/ChatOps4Msa-Sample-Bookinfo-Productpage.git
+git clone git@github.com:zxc90836/ChatOps4Msa-Sample-Bookinfo-Reviews.git
+git clone git@github.com:zxc90836/ChatOps4Msa-Sample-Bookinfo-Ratings.git
+git clone git@github.com:zxc90836/ChatOps4Msa-Sample-Bookinfo-Details.git
 cd ChatOps4Msa
 
 # close the previous container.

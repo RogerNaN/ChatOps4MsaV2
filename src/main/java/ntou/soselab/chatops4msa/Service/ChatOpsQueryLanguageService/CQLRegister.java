@@ -28,7 +28,7 @@ public class CQLRegister {
         this.jda = jdaService.getJDA();
         this.configLoader = configLoader;
 
-        //TODO: When executing for the first time, it's necessary to uncomment the following.
+        // TODO: When executing for the first time, it's necessary to uncomment the following.
 //        removeOriginalCommands();
 //        upsertNewCommands();
 //        checkCommandsStatusAndRestart(jdaService);

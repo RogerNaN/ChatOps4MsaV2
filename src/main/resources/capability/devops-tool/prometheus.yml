@@ -126,3 +126,48 @@ low_code:
             color: default
             field_json: "{\"it just a demo\": \"https://grafana.com/grafana/plugins/novatec-sdg-panel/\"}"
             image: https://cdn.discordapp.com/attachments/1127409934695419915/1127410019059630231/service-dependency-graph-panel.gif
+    - name: monitor-prometheus-service_error
+      parameter: null
+      description: |
+        Monitor the service error of all the services.
+      access: public
+      body:
+        - toolkit-restapi-get:
+            url: ${prometheus_host_url}/api/v1/alerts
+        - toolkit-json-parse:
+            json: ${toolkit-restapi-get}
+            jsonpath: $.data.alerts
+            assign: alerts_list
+        - toolkit-list-is_empty:
+            list: ${alerts_list}
+            assign: is_success
+        - toolkit-flow-if:
+            condition: ${is_success}
+            true:
+              - toolkit-discord-embed:
+                  title: The health status of all the services
+                  color: green
+                  field_json: "{\"status\":\"Inactive\"}"
+            false:
+              - toolkit-json-parse:
+                    json: ${toolkit-restapi-get} Service Termination
+                    jsonpath: $.data.alerts
+                    assign: alerts_list
+              - toolkit-list-foreach:
+                    list: ${alerts_list}
+                    element_name: alert
+                    todo:
+                      - toolkit-json-parse:
+                          json: ${alert}
+                          jsonpath: $.labels.name
+                          assign: service_name
+                      - toolkit-discord-text:
+                          text: ${service_name}
+                      - toolkit-discord-embed:
+                          title: ${service_name} service termination
+                          color: red
+                          field_json: "{\"status\":\"Firing\"}"
+                      - get-github-service_recent_activity:
+                          service_name: ${service_name}
+                          number_of_activity: 3
+

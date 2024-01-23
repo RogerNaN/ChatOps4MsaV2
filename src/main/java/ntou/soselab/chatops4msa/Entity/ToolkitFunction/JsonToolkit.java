@@ -28,14 +28,6 @@ public class JsonToolkit extends ToolkitFunction {
         return jsonString;
     }
 
-    public String toolkitJsonExtractService(String repository) {
-
-        String[] parts = repository.split("/");
-        int startIndex = repository.lastIndexOf("-") + 1;
-        String service = repository.substring(startIndex).toLowerCase();
-        //System.out.println(service);
-        return service; 
-    }
     /**
      * Writing "Github" intentionally instead of "GitHub" is for the convenience of function name conversion.
      */
@@ -53,32 +45,6 @@ public class JsonToolkit extends ToolkitFunction {
                 object.put("author", author.get(i));
                 object.put("message", message.get(i));
                 object.put("url", url.get(i));
-                object.put("date", date.get(i));
-                array.put(object);
-            }
-
-            return array.toString();
-
-        } catch (PathNotFoundException e) {
-            e.printStackTrace();
-            throw new ToolkitFunctionException(e.getLocalizedMessage());
-        }
-    }
-    /**/
-    public String toolkitJsonParseGithubEvent(String json, String first) throws ToolkitFunctionException {
-        try {
-            int length = Integer.parseInt(first) + 1;
-            List<String> author = JsonPath.parse(json).read("$[0:" + length + "].actor.login");
-            List<String> message = JsonPath.parse(json).read("$[0:" + length + "].type");
-            /*List<String> url = JsonPath.parse(json).read("$[0:" + length + "].html_url");*/
-            List<String> date = JsonPath.parse(json).read("$[0:" + length + "].created_at");
-
-            JSONArray array = new JSONArray();
-            for (int i = 0; i < author.size(); i++) {
-                JSONObject object = new JSONObject();
-                object.put("author", author.get(i));
-                object.put("message", message.get(i));
-                /*object.put("url", url.get(i));*/
                 object.put("date", date.get(i));
                 array.put(object);
             }

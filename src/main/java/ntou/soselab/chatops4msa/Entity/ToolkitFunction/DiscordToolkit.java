@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.util.Map;
 
 /**
@@ -23,35 +22,19 @@ import java.util.Map;
 @Component
 public class DiscordToolkit extends ToolkitFunction {
     private final JDAService jdaService;
-    private MathToolkit mathToolkit; // Inject MathToolkit
 
     @Autowired
-    public DiscordToolkit(JDAService jdaService, MathToolkit mathToolkit) {
+    public DiscordToolkit(JDAService jdaService) {
         this.jdaService = jdaService;
-        this.mathToolkit = mathToolkit;
     }
 
     /**
      * general text message
      */
     public void toolkitDiscordText(String text) {
-        double lastResult = mathToolkit.getLastResult();
-        String messageWithResult = text + lastResult;
-//        if(lastResult!=0.0){
-//            jdaService.sendChatOpsChannelMessage(messageWithResult);
-//        }
-//        else{
-//            jdaService.sendChatOpsChannelMessage(text);
-//        }
         jdaService.sendChatOpsChannelMessage(text);
     }
 
-    public String toolkitDiscordGet(String text) {
-        int lastResult = (int) mathToolkit.getLastResult();
-        //System.out.println(lastResult);
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
-        return decimalFormat.format(lastResult);
-    }
     /**
      * blue info message
      */

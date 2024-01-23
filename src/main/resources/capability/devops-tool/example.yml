@@ -25,21 +25,6 @@ low_code:
         - toolkit-discord-text: # return to Discord
             text: you say `${message}`
             assign: custom_variable # Declare a new variable
-    #newFuntion
-    - name: get-example-hello_message
-      parameter:
-        message: text message # get from Discord
-        answer: ${answer}
-      description: |
-        Just echo a message to Discord hello
-      access: public # all users can execute the operation
-      body:
-        - toolkit-discord-get:
-            text: getValue
-            assign: value
-        - toolkit-discord-text: # return to Discord
-            text: Hello! `${message}`. The answer is `${value}`
-            assign: custom_variable # Declare a new variable
 
     - name: get-example-math_calculate
       parameter:
@@ -53,3 +38,14 @@ low_code:
             assign: answer
         - toolkit-discord-text:
             text: the answer of `${expression}` is `${answer}`
+    - name: get-example-new_message
+      parameter:
+        expression: useless text just try can it get parameter
+      description: |
+        try to make a new example operation.
+      access: public
+      body:
+        - toolkit-discord-text:
+            text: this is a new operation that do nothing
+        - toolkit-discord-text:
+            text: your input is `${expression}`.

@@ -98,14 +98,6 @@ public class MessageDeliverer {
         argumentMap.put("event", message);
         System.out.println("[Event Arguments] " + messageMap);
 
-        // Extract status and result from the message
-        String status = messageMap.get("status");
-        String repository = messageMap.get("repository");
-        String result = messageMap.get("result");
-
-        // Check if the status indicates an error and print the result
-        String userId = "528840709047058432";
-
         // perform the capability
         try {
             orchestrator.performTheCapability(triggeredFunction, argumentMap);
@@ -118,10 +110,5 @@ public class MessageDeliverer {
 
         System.out.println("<<< end of current message event");
         System.out.println();
-        if ("failed".equals(status)) {
-            System.out.println("[######] " + result);
-            //jdaService.sendChatOpsChannelMessage("<@" + userId + "> set github issue");
-
-        }
     }
 }

@@ -60,88 +60,7 @@ low_code:
                         title: "[${i}] The recent activity of ${github_repository}"
                         color: green
                         field_json: ${json}
-    #
-    - name: get-github-service_recent_events
-      parameter:
-        service_name: service name
-        number_of_activity: 1 <= n <= 5
-      description: Retrieve recent events of a service's repo.
-      access: public
-      body:
-        - toolkit-string-pattern:
-            string: ${number_of_activity}
-            regex: ^[1-5]$
-            assign: in_range
-        - toolkit-flow-if:
-            condition: ${in_range}
-            false:
-            - toolkit-discord-warning:
-                text: "[WARNING] sorry, the number of activities must be between 1 and 5."
-        - toolkit-info-get:
-            system: bookinfo
-            service: ${service_name}
-            info: repository
-            assign: service_list
-        - toolkit-list-foreach:
-            list: ${service_list}
-            element_name: service
-            todo:
-              - toolkit-string-split:
-                  string: ${service}
-                  separator: /
-              - toolkit-list-get:
-                  list: ${toolkit-string-split}
-                  index: 3
-                  assign: github_username
-              - toolkit-list-get:
-                  list: ${toolkit-string-split}
-                  index: 4
-                  assign: github_repository
-              - toolkit-restapi-get:
-                  url: ${github_restapi_url}/repos/${github_username}/${github_repository}/events?per_page=${number_of_activity}
-                  assign: response
-              - toolkit-json-parse_github_event:
-                  json: ${response}
-                  first: ${number_of_activity}
-                  assign: json_list
-              - toolkit-list-foreach:
-                  list: ${json_list}
-                  element_name: json
-                  todo:
-                    - toolkit-discord-embed:
-                        title: "[${i}] The recent activity of ${github_repository}"
-                        color: green
-                        field_json: ${json}
-    #
-    - name: get-github-code_network_graph
-      parameter:
-        service_name: service name
-      description: |
-        Get the network graph.
-      access:
-        protected:
-          - Supervisor
-          - Team_Member
-      body:
-        - toolkit-info-get:
-            system: bookinfo
-            service: ${service_name}
-            info: name
-            assign: service_name_list
-        - toolkit-list-foreach:
-            list: ${service_name_list}
-            element_name: service
-            todo:
-              - set-repo-info_of_service_into_url:
-                  service_name: ${service}
-                  url: https://github.com/<<username>>/<<repo>>/network
-                  assign: url
-              - toolkit-discord-embed_thumbnail:
-                  title: This is the network graph of the ${service} service.
-                  color: green
-                  field_json: "{\"link\": \"${url}\"}"
-                  thumbnail: https://avatars.githubusercontent.com/u/73873468?v=4
-    #
+
     - name: get-github-service_code_scanning
       parameter:
         service_name: service name
@@ -189,67 +108,6 @@ low_code:
                   color: orange
                   field_json: "{\"process\": \"${process_url}\", \"code scanning\": \"${result_url}\"}"
 
-    - name: get-github-service_cs_and_is
-      parameter:
-        service_name: service name
-      description: |
-        Get the check report of the newest commit in the service's repo.
-      access:
-        protected:
-          - Supervisor
-          - Team_Member
-      body:
-        - toolkit-info-get:
-            system: bookinfo
-            service: ${service_name}
-            info: name
-            assign: service_name_list
-        - toolkit-list-foreach:
-            list: ${service_name_list}
-            element_name: service_name
-            todo:
-              - toolkit-info-get:
-                  system: bookinfo
-                  service: ${service_name}
-                  info: scan_run_id
-              - toolkit-list-to_string:
-                  list: ${toolkit-info-get}
-                  assign: scan_id
-              - set-repo-info_of_service_into_url:
-                  service_name: ${service_name}
-                  url: https://api.github.com/repos/<<username>>/<<repo>>/actions/runs/${scan_id}/rerun
-                  assign: run_url
-              - set-repo-info_of_service_into_url:
-                  service_name: ${service_name}
-                  url: https://github.com/<<username>>/<<repo>>/actions/runs/${scan_id}
-                  assign: process_url
-              - set-repo-info_of_service_into_url:
-                  service_name: ${service_name}
-                  url: https://github.com/<<username>>/<<repo>>/security/code-scanning
-                  assign: result_url
-              - toolkit-restapi-post:
-                  url: ${run_url}
-                  body: "{}"
-                  authorization: ${github_access_token}
-              - toolkit-discord-embed:
-                  title: Get the newest check report of ${service_name}
-                  color: orange
-                  field_json: "{\"process\": \"${process_url}\", \"code scanning\": \"${result_url}\"}"
-#              - toolkit-list-is_empty:
-#                  list: receive-github-code_scanning
-#                  assign: is_success
-#              - toolkit-flow-if:
-#                  condition: ${is_success}
-#                  true:
-#                    - toolkit-discord-info:
-#                        text: "error"
-##                    - set-github-issue:
-##                        service_name: ${service_name}
-##                        issue_title: "status:failed"
-##                        issue_message: issue message
-#                  false:
-#                    - toolkit-discord-info:
-#                        text: "success"
     - name: get-github-service_past_week_team_activity
       parameter:
         service_name: service name
@@ -491,3 +349,56 @@ low_code:
             replace: ${repository}
         - toolkit-flow-return:
             return: ${toolkit-string-replace}
+    - name: get-github-info_of_service_branch
+      parameter:
+        service_name: service name
+        branch: branch name
+        number_of_activity: 1 <= n <= 5
+      description: |
+        get the service branch info
+      access: public
+      body:
+        - toolkit-string-pattern:
+            string: ${number_of_activity}
+            regex: ^[1-5]$
+            assign: in_range
+        - toolkit-flow-if:
+            condition: ${in_range}
+            false:
+              - toolkit-discord-warning:
+                  text: "[WARNING] sorry, the number of activities must be between 1 and 5."
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: repository
+            assign: service_list
+        - toolkit-list-foreach:
+            list: ${service_list}
+            element_name: service
+            todo:
+              - toolkit-string-split:
+                  string: ${service}
+                  separator: /
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 3
+                  assign: github_username
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 4
+                  assign: github_repository
+              - toolkit-restapi-get:
+                  url: ${github_restapi_url}/repos/${github_username}/${github_repository}/commits?sha=${branch}&per_page=${number_of_activity}
+                  assign: response
+              - toolkit-json-parse_github_commit:
+                  json: ${response}
+                  first: ${number_of_activity}
+                  assign: json_list
+              - toolkit-list-foreach:
+                  list: ${json_list}
+                  element_name: json
+                  todo:
+                    - toolkit-discord-embed:
+                        title: "[${i}] The recent activity of ${github_repository}"
+                        color: green
+                        field_json: ${json}

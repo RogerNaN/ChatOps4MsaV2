@@ -28,16 +28,4 @@ public class FlowToolkit extends ToolkitFunction {
         if ("true".equals(condition)) orchestrator.invokeSpecialParameter(trueList, localVariableMap);
         else orchestrator.invokeSpecialParameter(falseList, localVariableMap);
     }
-
-    public void toolkitFlowIfStringMatch(String expectedValue, String actualValue,
-                                         List<InvokedFunction> trueList,
-                                         List<InvokedFunction> falseList,
-                                         Map<String, String> localVariableMap) throws ToolkitFunctionException {
-
-        if (expectedValue.equals(actualValue)) {
-            orchestrator.invokeSpecialParameter(trueList, localVariableMap);
-        } else {
-            orchestrator.invokeSpecialParameter(falseList, localVariableMap);
-        }
-    }
 }

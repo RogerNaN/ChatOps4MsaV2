@@ -5,33 +5,32 @@ info:
     It's a Bookinfo Microservices System, which consists of the Ordering, Payment and Notification services.
 
 service:
-  - name: productpage
-    url: http://192.168.100.223:9080
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Productpage
+  - name: chatops4msa-bookinfo-productpage
+    url: http://192.168.100.35:9080
+    repository: https://github.com/zxc90836/ChatOps4Msa-Sample-Bookinfo-Productpage
     description: This is the product page microservice.
-    scan_run_id: 7036556039
-
-  - name: reviews
-    url: http://192.168.100.223:9083
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Reviews
+    scan_run_id: 5947043944
+    deployment_branch: main
+  - name: chatops4msa-bookinfo-reviews
+    url: http://192.168.100.35:9083
+    repository: https://github.com/zxc90836/ChatOps4Msa-Sample-Bookinfo-Reviews
     description: This is the reviews microservice.
-    scan_run_id: 7035913677
+    scan_run_id: 5947038973
 
-  - name: details
-    url: http://192.168.100.223:9081
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Details
+  - name: chatops4msa-bookinfo-details
+    url: http://192.168.100.35:9081
+    repository: https://github.com/zxc90836/ChatOps4Msa-Sample-Bookinfo-Details
     description: This is the details microservice.
-    scan_run_id: 7036397689
+    scan_run_id: 5947014232
 
-  - name: ratings
-    url: http://192.168.100.223:9082
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Ratings
+  - name: chatops4msa-bookinfo-ratings
+    url: http://192.168.100.35:9082
+    repository: https://github.com/zxc90836/ChatOps4Msa-Sample-Bookinfo-Ratings
     description: This is the ratings microservice.
-    scan_run_id: 7086468365
+    scan_run_id: 5947028699
 
 capability:
   - get-example-echo_message
-  - get-example-hello_message
   - get-example-math_calculate
   - get-github-service_recent_activity
   - get-github-service_code_scanning
@@ -40,8 +39,6 @@ capability:
   - get-github-issue_progress_timeline
   - set-github-issue
   - get-prometheus-alert_rule
-  - get-github-service_recent_events
-#  - get-github-code_network_graph
   - monitor-prometheus-service_health
   - monitor-prometheus-grafana_overview
   - monitor-prometheus-promql_overview
@@ -50,4 +47,6 @@ capability:
   - test-k6-stress_testing
   - test-k6-smoke_testing_all_service
   - test-custom_test-smoke_and_repo_all_service
-  - get-github-service_cs_and_is
+  - get-example-new_message
+  - monitor-prometheus-service_error
+  - get-github-info_of_service_branch
