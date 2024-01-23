@@ -1,0 +1,493 @@
+info:
+  version: 1.0.0
+  title: GitHub
+  description: Using GraphQL to access GitHub's services to assist with DevOps.
+
+low_code:
+  property:
+    github_restapi_url: https://api.github.com
+    github_access_token: ${secret.github_access_token}
+
+  operation:
+    - name: get-github-service_recent_activity
+      parameter:
+        service_name: service name
+        number_of_activity: 1 <= n <= 5
+      description: Retrieve recent activities of a service's repo.
+      access: public
+      body:
+        - toolkit-string-pattern:
+            string: ${number_of_activity}
+            regex: ^[1-5]$
+            assign: in_range
+        - toolkit-flow-if:
+            condition: ${in_range}
+            false:
+              - toolkit-discord-warning:
+                  text: "[WARNING] sorry, the number of activities must be between 1 and 5."
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: repository
+            assign: service_list
+        - toolkit-list-foreach:
+            list: ${service_list}
+            element_name: service
+            todo:
+              - toolkit-string-split:
+                  string: ${service}
+                  separator: /
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 3
+                  assign: github_username
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 4
+                  assign: github_repository
+              - toolkit-restapi-get:
+                  url: ${github_restapi_url}/repos/${github_username}/${github_repository}/commits?per_page=${number_of_activity}
+                  assign: response
+              - toolkit-json-parse_github_commit:
+                  json: ${response}
+                  first: ${number_of_activity}
+                  assign: json_list
+              - toolkit-list-foreach:
+                  list: ${json_list}
+                  element_name: json
+                  todo:
+                    - toolkit-discord-embed:
+                        title: "[${i}] The recent activity of ${github_repository}"
+                        color: green
+                        field_json: ${json}
+    #
+    - name: get-github-service_recent_events
+      parameter:
+        service_name: service name
+        number_of_activity: 1 <= n <= 5
+      description: Retrieve recent events of a service's repo.
+      access: public
+      body:
+        - toolkit-string-pattern:
+            string: ${number_of_activity}
+            regex: ^[1-5]$
+            assign: in_range
+        - toolkit-flow-if:
+            condition: ${in_range}
+            false:
+            - toolkit-discord-warning:
+                text: "[WARNING] sorry, the number of activities must be between 1 and 5."
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: repository
+            assign: service_list
+        - toolkit-list-foreach:
+            list: ${service_list}
+            element_name: service
+            todo:
+              - toolkit-string-split:
+                  string: ${service}
+                  separator: /
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 3
+                  assign: github_username
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 4
+                  assign: github_repository
+              - toolkit-restapi-get:
+                  url: ${github_restapi_url}/repos/${github_username}/${github_repository}/events?per_page=${number_of_activity}
+                  assign: response
+              - toolkit-json-parse_github_event:
+                  json: ${response}
+                  first: ${number_of_activity}
+                  assign: json_list
+              - toolkit-list-foreach:
+                  list: ${json_list}
+                  element_name: json
+                  todo:
+                    - toolkit-discord-embed:
+                        title: "[${i}] The recent activity of ${github_repository}"
+                        color: green
+                        field_json: ${json}
+    #
+    - name: get-github-code_network_graph
+      parameter:
+        service_name: service name
+      description: |
+        Get the network graph.
+      access:
+        protected:
+          - Supervisor
+          - Team_Member
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service
+            todo:
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service}
+                  url: https://github.com/<<username>>/<<repo>>/network
+                  assign: url
+              - toolkit-discord-embed_thumbnail:
+                  title: This is the network graph of the ${service} service.
+                  color: green
+                  field_json: "{\"link\": \"${url}\"}"
+                  thumbnail: https://avatars.githubusercontent.com/u/73873468?v=4
+    #
+    - name: get-github-service_code_scanning
+      parameter:
+        service_name: service name
+      description: |
+        Get the check report of the newest commit in the service's repo.
+      access:
+        protected:
+          - Supervisor
+          - Team_Member
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service_name
+            todo:
+              - toolkit-info-get:
+                  system: bookinfo
+                  service: ${service_name}
+                  info: scan_run_id
+              - toolkit-list-to_string:
+                  list: ${toolkit-info-get}
+                  assign: scan_id
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://api.github.com/repos/<<username>>/<<repo>>/actions/runs/${scan_id}/rerun
+                  assign: run_url
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://github.com/<<username>>/<<repo>>/actions/runs/${scan_id}
+                  assign: process_url
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://github.com/<<username>>/<<repo>>/security/code-scanning
+                  assign: result_url
+              - toolkit-restapi-post:
+                  url: ${run_url}
+                  body: "{}"
+                  authorization: ${github_access_token}
+              - toolkit-discord-embed:
+                  title: Get the newest check report of ${service_name}
+                  color: orange
+                  field_json: "{\"process\": \"${process_url}\", \"code scanning\": \"${result_url}\"}"
+
+    - name: get-github-service_cs_and_is
+      parameter:
+        service_name: service name
+      description: |
+        Get the check report of the newest commit in the service's repo.
+      access:
+        protected:
+          - Supervisor
+          - Team_Member
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service_name
+            todo:
+              - toolkit-info-get:
+                  system: bookinfo
+                  service: ${service_name}
+                  info: scan_run_id
+              - toolkit-list-to_string:
+                  list: ${toolkit-info-get}
+                  assign: scan_id
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://api.github.com/repos/<<username>>/<<repo>>/actions/runs/${scan_id}/rerun
+                  assign: run_url
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://github.com/<<username>>/<<repo>>/actions/runs/${scan_id}
+                  assign: process_url
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://github.com/<<username>>/<<repo>>/security/code-scanning
+                  assign: result_url
+              - toolkit-restapi-post:
+                  url: ${run_url}
+                  body: "{}"
+                  authorization: ${github_access_token}
+              - toolkit-discord-embed:
+                  title: Get the newest check report of ${service_name}
+                  color: orange
+                  field_json: "{\"process\": \"${process_url}\", \"code scanning\": \"${result_url}\"}"
+#              - toolkit-list-is_empty:
+#                  list: receive-github-code_scanning
+#                  assign: is_success
+#              - toolkit-flow-if:
+#                  condition: ${is_success}
+#                  true:
+#                    - toolkit-discord-info:
+#                        text: "error"
+##                    - set-github-issue:
+##                        service_name: ${service_name}
+##                        issue_title: "status:failed"
+##                        issue_message: issue message
+#                  false:
+#                    - toolkit-discord-info:
+#                        text: "success"
+    - name: get-github-service_past_week_team_activity
+      parameter:
+        service_name: service name
+      description: get the team's activity for the specified service within the past week
+      access: public
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service
+            todo:
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service}
+                  url: https://api.github.com/repos/<<username>>/<<repo>>/commits?since=<<start>>&until=<<end>>
+                  assign: url
+              - toolkit-time-one_week_ago: null
+              - toolkit-time-today: null
+              - toolkit-string-replace:
+                  string: ${url}
+                  original: <<start>>
+                  replace: ${toolkit-time-one_week_ago}
+                  assign: url
+              - toolkit-string-replace:
+                  string: ${url}
+                  original: <<end>>
+                  replace: ${toolkit-time-today}
+                  assign: url
+              - toolkit-restapi-get:
+                  url: ${url}
+                  assign: response
+              - toolkit-json-parse_github_commit:
+                  json: ${response}
+                  first: 10
+                  assign: field_list
+              - toolkit-list-foreach:
+                  list: ${field_list}
+                  element_name: field
+                  todo:
+                    - toolkit-discord-embed:
+                        title: "[${i}] The activity status of each team member within the past week of ${service_name}"
+                        color: green
+                        field_json: ${field}
+
+    - name: get-github-contribution_of_team_member
+      parameter:
+        service_name: service name
+      description: |
+        Get the contribution analysis of team members.
+      access:
+        protected:
+          - Supervisor
+          - Team_Member
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service
+            todo:
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service}
+                  url: https://github.com/<<username>>/<<repo>>/graphs/contributors
+                  assign: url
+              - toolkit-discord-embed_thumbnail:
+                  title: This is the contribution analysis of the ${service} service.
+                  color: green
+                  field_json: "{\"link\": \"${url}\"}"
+                  thumbnail: https://avatars.githubusercontent.com/u/76858274?v=4
+
+    - name: get-github-issue_progress_timeline
+      parameter:
+        service_name: service name
+        number_of_issue: 1 <= n <= 5
+      description: |
+        Describe the progress of the issue with a timeline.
+      access: public
+      body:
+        # all service
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service_name
+            todo:
+              # service loop
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service_name}
+                  url: https://api.github.com/repos/<<username>>/<<repo>>/issues?per_page=${number_of_issue}
+                  assign: get_issue_list_url
+              - toolkit-restapi-get:
+                  url: ${get_issue_list_url}
+              - toolkit-list-foreach:
+                  list: ${toolkit-restapi-get}
+                  element_name: issue_json
+                  todo:
+                    # issue loop (single service)
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.html_url
+                        assign: html_url
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.user.login
+                        assign: author
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.created_at
+                        assign: created_at
+                    - toolkit-time-convert_to_taiwan:
+                        time: ${created_at}
+                        assign: created_at
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.title
+                        assign: title
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.body
+                        assign: body
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.state
+                        assign: state
+                    - toolkit-discord-embed:
+                        title: ${title} (${state})
+                        color: orange
+                        field_json: "{\"content\":\"${body}\", \"created_at\": \"${created_at} (Taiwan)\", \"author\":\"${author}\", \"html_url\":\"${html_url}\"}"
+                    # print timeline
+                    - toolkit-json-parse:
+                        json: ${issue_json}
+                        jsonpath: $.timeline_url
+                        assign: get_timeline_url
+                    - toolkit-restapi-get:
+                        url: ${get_timeline_url}
+                        assign: timeline_list
+                    - toolkit-list-foreach:
+                        list: ${timeline_list}
+                        element_name: timeline_json
+                        todo:
+                          - toolkit-json-parse:
+                              json: ${timeline_json}
+                              jsonpath: $.created_at
+                              assign: created_at
+                          - toolkit-time-convert_to_taiwan:
+                              time: ${created_at}
+                              assign: created_at
+                          - toolkit-json-parse:
+                              json: ${timeline_json}
+                              jsonpath: $.actor.login
+                              assign: author
+                          - toolkit-json-parse:
+                              json: ${timeline_json}
+                              jsonpath: $.event
+                              assign: event
+                          - toolkit-discord-blocks:
+                              text: "[${created_at}] ${event} by ${author}"
+              - toolkit-discord-text:
+                  text: ===================================================
+
+    - name: set-github-issue
+      parameter: 
+        service_name: service name
+        issue_title: issue title
+        issue_message: issue message
+      description: |
+        Create issues in the repo of services with dependency risks.
+      access:
+        protected:
+          - Supervisor
+          - Team_Member
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: name
+            assign: service_name_list
+        - toolkit-list-foreach:
+            list: ${service_name_list}
+            element_name: service
+            todo:
+              - set-repo-info_of_service_into_url:
+                  service_name: ${service}
+                  url: https://api.github.com/repos/<<username>>/<<repo>>/issues
+                  assign: url
+              - toolkit-restapi-post:
+                  url: ${url}
+                  body: "{\"title\": \"${issue_title}\", \"body\": \"${issue_message}\"}"
+                  authorization: ${github_access_token}
+                  assign: response
+              - toolkit-json-parse:
+                  json: ${response}
+                  jsonpath: $.html_url
+                  assign: html_url
+              - toolkit-discord-embed:
+                  title: Create a new issue of ${service_name}
+                  color: green
+                  field_json: "{\"title\": \"${issue_title}\", \"message\": \"${issue_message}\", \"link\": \"${html_url}\"}"
+
+    - name: set-repo-info_of_service_into_url
+      parameter:
+        service_name: null
+        url: null
+      description: |
+        Put the repository information of a certain service into url string.
+      access: private
+      body:
+        - toolkit-info-get:
+            system: bookinfo
+            service: ${service_name}
+            info: repository
+        - toolkit-string-split:
+            string: ${toolkit-info-get}
+            separator: /
+        - toolkit-list-get:
+            list: ${toolkit-string-split}
+            index: 3
+            assign: username
+        - toolkit-list-get:
+            list: ${toolkit-string-split}
+            index: 4
+            assign: repository
+        - toolkit-string-replace:
+            string: ${url}
+            original: <<username>>
+            replace: ${username}
+        - toolkit-string-replace:
+            string: ${toolkit-string-replace}
+            original: <<repo>>
+            replace: ${repository}
+        - toolkit-flow-return:
+            return: ${toolkit-string-replace}

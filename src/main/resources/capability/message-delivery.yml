@@ -1,0 +1,47 @@
+info:
+  version: 1.0.0
+  title: Message Delivery
+  description: |
+    Using RabbitMQ to receive message
+
+low_code:
+  on_message:
+    - name: receive-github-code_scanning
+      parameter:
+        event: null
+      description: Trigger when code scanning is ok.
+      access: private
+      body:
+        - toolkit-discord-embed_thumbnail:
+            title: Code Scanning
+            color: default
+            field_json: ${event}
+            thumbnail: https://avatars.githubusercontent.com/u/44036562?s=280&v=4
+        - toolkit-json-parse:
+            json: ${event}
+            jsonpath: $.status
+            assign: status
+        - toolkit-json-parse:
+            json: ${event}
+            jsonpath: $.repository
+            assign: repository
+        - toolkit-json-extract_service:
+            json: ${repository}
+            assign: service
+        - toolkit-json-parse:
+            json: ${event}
+            jsonpath: $.result
+            assign: result
+        - toolkit-flow-if_string_match:
+            expectedValue: "failed"
+            actualValue: ${status}
+            true:
+              - toolkit-discord-info:
+                  text: "error need set issue"
+              - set-github-issue:
+                  service_name: ${service}
+                  issue_title: "status failed"
+                  issue_message: ${result}
+            false:
+              - toolkit-discord-info:
+                  text: "success"

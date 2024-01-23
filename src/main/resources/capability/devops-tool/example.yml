@@ -1,0 +1,55 @@
+info:
+  version: 1.0.0
+  title: example
+  description: Just an example for the capability.
+
+low_code:
+  constructor:
+    - name: get-example-current_time
+      parameter: null
+      description: Time reporting upon startup.
+      access: private
+      body:
+        - toolkit-time-today: null
+        - toolkit-discord-blocks:
+            text: Today is ${toolkit-time-today}
+
+  operation:
+    - name: get-example-echo_message
+      parameter:
+        message: text message # get from Discord
+      description: |
+        Just echo a message to Discord
+      access: public # all users can execute the operation
+      body:
+        - toolkit-discord-text: # return to Discord
+            text: you say `${message}`
+            assign: custom_variable # Declare a new variable
+    #newFuntion
+    - name: get-example-hello_message
+      parameter:
+        message: text message # get from Discord
+        answer: ${answer}
+      description: |
+        Just echo a message to Discord hello
+      access: public # all users can execute the operation
+      body:
+        - toolkit-discord-get:
+            text: getValue
+            assign: value
+        - toolkit-discord-text: # return to Discord
+            text: Hello! `${message}`. The answer is `${value}`
+            assign: custom_variable # Declare a new variable
+
+    - name: get-example-math_calculate
+      parameter:
+        expression: like 2 * 3 / 4
+      description: |
+        Perform calculations using the given mathematical expression.
+      access: public
+      body:
+        - toolkit-math-calculate:
+            expression: ${expression}
+            assign: answer
+        - toolkit-discord-text:
+            text: the answer of `${expression}` is `${answer}`

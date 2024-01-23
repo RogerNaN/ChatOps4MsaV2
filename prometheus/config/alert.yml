@@ -1,0 +1,22 @@
+groups:
+  - name: example
+    rules:
+      # Alert for any instance that is unreachable for >1 minute.
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+  - name: container_status_checks
+    rules:
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name="chatops4msa-bookinfo-reviews"}) or on (name) container_last_seen{name="chatops4msa-bookinfo-reviews"} <= time() - 60
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container chatops4msa-bookinfo-reviews is down"
+          description: "The container chatops4msa-bookinfo-reviews has not been seen for more than 5 minutes."
